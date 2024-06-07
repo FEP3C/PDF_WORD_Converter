@@ -1,79 +1,60 @@
 import os
-import tkinter as tk
-from tkinter import filedialog, messagebox
-from docx2pdf import convert
+from tkinter import Tk, Label, Button, filedialog
 from pdf2docx import Converter
+from docx2pdf import convert
 
-class FileConverterApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("文件格式转换器")
-        self.root.geometry("300x200")
+def select_pdf_file():
+    file_path = filedialog.askopenfilename(filetypes=[('PDF 文件', '*.pdf')])
+    pdf_file_label.config(text=file_path)
 
-        self.file_path_label = tk.Label(root, text="请选择文件：")
-        self.file_path_label.pack(pady=10)
+def select_word_file():
+    file_path = filedialog.askopenfilename(filetypes=[('Word 文件', '*.docx *.doc')])
+    word_file_label.config(text=file_path)
 
-        self.select_button = tk.Button(root, text="选择文件", command=self.select_file)
-        self.select_button.pack(pady=5)
+def convert_pdf_to_docx():
+    pdf_file = pdf_file_label.cget("text")
+    if pdf_file:
+        docx_file = os.path.splitext(pdf_file)[0] + ".docx"
+        cv = Converter(pdf_file)
+        cv.convert(docx_file, start=0, end=None)
+        cv.close()
+        result_label.config(text="PDF转换为Word完成。")
+    else:
+        result_label.config(text="请先选择一个PDF文件。")
 
-        self.convert_button = tk.Button(root, text="转换", command=self.convert_file)
-        self.convert_button.pack(pady=5)
+def convert_docx_to_pdf():
+    word_file = word_file_label.cget("text")
+    if word_file:
+        pdf_file = os.path.splitext(word_file)[0] + ".pdf"
+        convert(word_file, pdf_file)
+        result_label.config(text="Word转换为PDF完成。")
+    else:
+        result_label.config(text="请先选择一个Word文件。")
 
-        self.file_path = ''
+# 创建GUI界面
+root = Tk()
+root.title("文件转换")
 
-    def select_file(self):
-        self.file_path = filedialog.askopenfilename()
-        if self.file_path:
-            self.file_path_label.config(text="选择的文件：" + os.path.basename(self.file_path))
+# 选择PDF文件按钮和标签
+pdf_select_button = Button(root, text="选择PDF文件", command=select_pdf_file)
+pdf_select_button.pack(pady=10)
+pdf_file_label = Label(root, text="未选择文件")
+pdf_file_label.pack()
 
-    def convert_file(self):
-        if not self.file_path:
-            messagebox.showerror("错误", "请先选择文件！")
-            return
+# 选择Word文件按钮和标签
+word_select_button = Button(root, text="选择Word文件", command=select_word_file)
+word_select_button.pack(pady=10)
+word_file_label = Label(root, text="未选择文件")
+word_file_label.pack()
 
-        file_extension = os.path.splitext(self.file_path)[-1].lower()
+# 转换按钮和结果标签
+pdf_to_docx_button = Button(root, text="将PDF转换为Word", command=convert_pdf_to_docx)
+pdf_to_docx_button.pack(pady=10)
 
-        if file_extension == '.pdf':
-            target_file = filedialog.asksaveasfilename(defaultextension=".docx",
-                                                       filetypes=[("Word Files", "*.docx")])
-            if target_file:
-                try:
-                    with Converter(self.file_path) as converter:
-                        converter.convert(target_file, start=0, end=None)
-                        converter.close()
-                    self.show_popup()
-                except Exception as e:
-                    messagebox.showerror("错误", str(e))
-        elif file_extension == '.docx':
-            target_file = filedialog.asksaveasfilename(defaultextension=".pdf",
-                                                       filetypes=[("PDF Files", "*.pdf")])
-            if target_file:
-                try:
-                    convert(self.file_path, target_file)
-                    self.show_popup()
-                except Exception as e:
-                    messagebox.showerror("错误", str(e))
-        else:
-            messagebox.showerror("错误", "只支持Word和PDF格式文件！")
+docx_to_pdf_button = Button(root, text="将Word转换为PDF", command=convert_docx_to_pdf)
+docx_to_pdf_button.pack(pady=10)
 
-    def show_popup(self):
-        popup = tk.Toplevel()
-        popup.geometry("300x100")
-        popup.title("提示")
-        label = tk.Label(popup, text="文件转换好了！\n关注https://github.com/FEP3C吧！\n谢谢喵主人！")
-        label.pack()
+result_label = Label(root, text="")
+result_label.pack()
 
-        open_browser_button = tk.Button(popup, text="打开浏览器", command=self.open_browser)
-        open_browser_button.pack(pady=5)
-
-        exit_button = tk.Button(popup, text="退出", command=self.root.destroy)
-        exit_button.pack(pady=5)
-
-    def open_browser(self):
-        import webbrowser
-        webbrowser.open("https://github.com/FEP3C")
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = FileConverterApp(root)
-    root.mainloop()
+root.mainloop()
